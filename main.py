@@ -1,7 +1,6 @@
 import pygame
 import typing
-
-from pygame import surface
+import random
 
 
 pygame.init()
@@ -29,11 +28,12 @@ class Menu:
         self.surface: pygame.Surface
         self.rect: pygame.Rect
         self.relative_rect: pygame.Rect
+        self.no_scroll = False
         self.pos = pos
         self.changes = False
         self.dim = dim
 
-        options = ['line', 'line', "ola", "hei", 'delo', 'i']
+        options = [random.choice(['line', 'line', "ola", "hei", 'delo', 'i']) for i in range(20)]
         self.options: typing.List[MenuItem] = list()
 
         for option in options:
@@ -46,6 +46,9 @@ class Menu:
         self.plot()
     
     def scroll(self, pos, down=True):
+        if self.no_scroll:
+            return 
+        
         if down:
             if self.relative_rect.bottom > self.rect.h:
                 self.relative_rect.move_ip(0, -7)
@@ -110,15 +113,18 @@ class Menu:
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = self.pos
 
+        if self.rect.h > self.relative_rect.h:
+            self.no_scroll = True
+
         self.changes = True
 
         self.draw_image()
 
 
 class AppManager:
-    def __init__(self, width, heigth) -> None:
-        self.screen = pygame.display.set_mode((width, heigth))
-        self.menu = Menu((0, 0), (None, 200))
+    def __init__(self, width, height) -> None:
+        self.screen = pygame.display.set_mode((width, height))
+        self.menu = Menu((0, 0), (None, height))
         self.canva = Canva()
     
     def run(self):
