@@ -147,10 +147,7 @@ class AppManager:
                             self.menu.scroll(event.pos)
                     
                 if event.type == pygame.MOUSEMOTION:
-                    if self.menu.rect.collidepoint(event.pos):
-                        self.menu.mouse_movement(event.pos)
-                    else:
-                        self.menu.draw_image()
+                    self.menu.mouse_movement(event.pos)
             
             clock.tick(60)
 
