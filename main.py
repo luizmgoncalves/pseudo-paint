@@ -22,18 +22,21 @@ class Menu:
     font: pygame.font.Font = pygame.font.SysFont('Times New Roman', 40)
     font_color = (0, 0, 0)
     bg_hid_color = (255, 255, 255)
+    scroll_bar_width = 10
 
     def __init__(self, pos, dim: tuple): 
         self.image: pygame.Surface
         self.surface: pygame.Surface
         self.rect: pygame.Rect
         self.relative_rect: pygame.Rect
+        self.scroll_bar: pygame.Rect
+        self.line_width = 1
         self.no_scroll = False
         self.pos = pos
         self.changes = False
         self.dim = dim
 
-        options = [random.choice(['line', 'line', "ola", "hei", 'delo', 'i']) for i in range(20)]
+        options = [random.choice(['line', 'line', "ola", "hei", 'delo', 'i']) for i in range(60)]
         self.options: typing.List[MenuItem] = list()
 
         for option in options:
@@ -51,16 +54,18 @@ class Menu:
         
         if down:
             if self.relative_rect.bottom > self.rect.h:
-                self.relative_rect.move_ip(0, -7)
+                self.relative_rect.move_ip(0, -20)
             if self.relative_rect.bottom < self.rect.h:
                 self.relative_rect.bottom = self.rect.h
         else:
             if self.relative_rect.y < 0:
-                self.relative_rect.move_ip(0, 7)
+                self.relative_rect.move_ip(0, 20)
             if self.relative_rect.y > 0:
                 self.relative_rect.y = 0
         
         self.mouse_movement(pos)
+
+        self.scroll_bar.y = -int(((self.relative_rect.y-self.rect.y)/self.relative_rect.h)*self.rect.h)
         
         self.changes = True
         self.draw_image()
@@ -78,6 +83,10 @@ class Menu:
             self.surface.blit(option.image, option.rect)
         
         self.image.blit(self.surface, self.relative_rect)
+
+        pygame.draw.rect(self.image, (0, 0, 0), (self.rect.w-self.scroll_bar_width-self.line_width*2, 0, self.scroll_bar_width+self.line_width*2, self.rect.h), width=self.line_width)
+        pygame.draw.rect(self.image, (0, 0, 0), self.scroll_bar, border_radius=3)
+        pygame.draw.rect(self.image, (0, 0, 0), self.rect, width=self.line_width, border_radius=2)
 
         self.changes = False
     
@@ -99,19 +108,30 @@ class Menu:
             option.image.blit(option.text_rendered, (max_x//2-option.text_rendered.get_width()//2, self.padding))
 
             option.rect = pygame.Rect((0, current_y), option.image.get_size())
-            pygame.draw.rect(option.image, self.font_color, ((0, 0), option.rect.size), width=1)
+            pygame.draw.rect(option.image, self.font_color, ((0, 0), option.rect.size), width=self.line_width)
             current_y += option.image.get_height()
 
         self.surface = pygame.Surface((max_x, current_y), flags=pygame.SRCALPHA)
         self.relative_rect = self.surface.get_rect()
-
-        if self.dim[0] is None:
-            self.image = pygame.Surface((max_x, self.dim[1]), flags=pygame.SRCALPHA)
+        
+        if self.dim[0] is None and self.dim[1] is None:
+            self.image = pygame.Surface((max_x+self.scroll_bar_width+self.line_width, current_y), flags=pygame.SRCALPHA)
+        elif self.dim[0] is None:
+            self.image = pygame.Surface((max_x+self.scroll_bar_width+self.line_width, self.dim[1]), flags=pygame.SRCALPHA)
+        elif self.dim[1] is None:
+            self.image = pygame.Surface((self.dim[0], current_y), flags=pygame.SRCALPHA)
         else:
-            self.image = pygame.Surface(self.dim, flags=pygame.SRCALPHA)
+            self.image = pygame.Surface((self.dim[0], self.dim[1]), flags=pygame.SRCALPHA)
         
         self.rect = self.image.get_rect()
+        print(self.rect, max_x, self.scroll_bar_width)
         self.rect.x, self.rect.y = self.pos
+
+        self.scroll_bar = pygame.Rect((self.rect.w-self.scroll_bar_width-self.line_width, int((self.relative_rect.y-self.rect.y)/self.relative_rect.h))
+                                      ,(self.scroll_bar_width, int(self.rect.h/self.relative_rect.h*self.rect.h)))
+        
+        print(self.scroll_bar)
+        print(self.rect)
 
         if self.rect.h > self.relative_rect.h:
             self.no_scroll = True
@@ -124,7 +144,7 @@ class Menu:
 class AppManager:
     def __init__(self, width, height) -> None:
         self.screen = pygame.display.set_mode((width, height))
-        self.menu = Menu((0, 0), (None, height))
+        self.menu = Menu((0, 0), (None, 200))
         self.canva = Canva()
     
     def run(self):
